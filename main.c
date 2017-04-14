@@ -103,7 +103,6 @@ void EXTI0_IRQHandler() {
 				//Unmute and Start
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_OFF);
 				startTimer();
-				LED_WritePattern(LED_patterns[current_frequency]);
 				stopped = 0;
 				one_second_ticks = 0;
 			}
@@ -111,18 +110,17 @@ void EXTI0_IRQHandler() {
 				//Stop if less than one second since last press
 				stopTimer();
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
-				LED_WritePattern(0x00);
 				stopped = 1;
 			}
 			else {
 				// Else change frequency
 				current_frequency = current_frequency < 7 ? current_frequency + 1 : 0;
-				LED_WritePattern(LED_patterns[current_frequency]);
 				gen_ptr->frequency = frequencies[current_frequency];
 				reset_wave_gen(gen_ptr);
 				one_second_ticks = 0;
 			}
 		}
+		LED_WritePattern(LED_patterns[current_frequency]);
 		EXTI->PR |= 0x01; //Clear Pending Bit
 }
 
