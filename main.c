@@ -4,10 +4,9 @@
  */
 
 // Timer values: Tout = (ARR+1)x(PSC+1)x(1/Fclk)
-#define TIM2_ARR_VALUE 419 //99
-#define TIM2_PSC_VALUE 9 //7
+#define TIM2_ARR_VALUE 419
+#define TIM2_PSC_VALUE 9
 // 420*10/84000000 = .05 ms = 20000 Hz
-// 100*8/16000000 = .05 ms = 20000 Hz
 
 #define TIM3_ARR_VALUE 6
 #define TIM3_PSC_VALUE 0
