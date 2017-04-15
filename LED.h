@@ -3,6 +3,9 @@
  * Date: April 15, 2017
  */
 
+#ifndef _LED_H_
+#define _LED_H_
+
 #define LED_OFF 0x00  
 #define LED_G 0x01  
 #define LED_O 0x02  
@@ -35,3 +38,4 @@ void LED_Initialize(void);
 void LED_WritePattern(uint8_t pattern);
 void LED_Toggle(LED_t LED_selection);
 
+#endif

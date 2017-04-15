@@ -52,8 +52,8 @@ int cos_taylor(int q1814_int) {
 	}
 	x2 = x*x >> 14; //x^2
 
-	//Cosine approximation: cos(x) = C1+C2*x^2+C3*x^4+C4*x^6
-	cosine = C1 + (x2*(C2 + (x2*(C3 + (x2*C4 >> 14)) >> 14)) >> 14); 
+	//Cosine approximation: cos(x) = C_1+C_2*x^2+C_3*x^4+C_4*x^6
+	cosine = C_1 + (x2*(C_2 + (x2*(C_3 + (x2*C_4 >> 14)) >> 14)) >> 14); 
 	if (quadrant == 1 || quadrant == 2){
 		cosine = -cosine; //If Quadrant 1 or 2, cosine is negative
 	}

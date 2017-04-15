@@ -14,8 +14,6 @@
 
 #define DAC_MAX 2048
 #define VOLUME 1
-#define SONG_SIZE 73
-
 
 #include "stm32f4xx.h"  
 #include "..\Includes\cs43l22.h"
@@ -24,7 +22,7 @@
 #include "cosine.h"
 #include "LED.h"
 #include "button.h"
-#include "notes.h"
+#include "AU_FightSong.h"
 
 void timerSetup(void);
 void startTimer(void);
@@ -38,82 +36,9 @@ uint16_t DAC_value;
 uint32_t beat_ticks;			//Counter for Flashing LED
 uint8_t stopped;			//Tells whether sound is stopped
 uint8_t current_note; 	//Current index of the frequency
-// Frequencies in Q28.4
-Note_t notes[] = 
-		{C4(WHOLE_NOTE), 
-		A4(HALF_NOTE),
-		G4(HALF_NOTE),
-		F4(QUARTER_NOTE),
-		F4(HALF_NOTE),
-		D4(QUARTER_NOTE),
-		C4(DOTTED_HALF_NOTE),
-		REST(QUARTER_NOTE),
-		E4(QUARTER_NOTE),
-		E4(HALF_NOTE),
-		F4(QUARTER_NOTE),
-		G4(HALF_NOTE),
-		C4(HALF_NOTE),
-		F4(QUARTER_NOTE),
-		F4(HALF_NOTE),
-		G4(QUARTER_NOTE),
-		A4(DOTTED_HALF_NOTE),
-		REST(QUARTER_NOTE),
-		C4(WHOLE_NOTE), 
-		A4(HALF_NOTE),
-		G4(HALF_NOTE),
-		F4(QUARTER_NOTE),
-		F4(HALF_NOTE),
-		D4(QUARTER_NOTE),
-		C4(DOTTED_HALF_NOTE),
-		REST(QUARTER_NOTE),
-		E4(QUARTER_NOTE),
-		Eb4(HALF_NOTE),
-		E4(QUARTER_NOTE),
-		F4(QUARTER_NOTE),
-		E4(QUARTER_NOTE),
-		D4(HALF_NOTE),
-		G4(QUARTER_NOTE),
-		REST(QUARTER_NOTE),
-		C5(HALF_NOTE),
-		C5(HALF_NOTE),
-		C5(HALF_NOTE),
-		C5(DOTTED_HALF_NOTE),
-		Bb4(QUARTER_NOTE),
-		A4(HALF_NOTE),
-		G4(HALF_NOTE),
-		F4(QUARTER_NOTE),
-		F4(HALF_NOTE),
-		G4(QUARTER_NOTE),
-		A4(DOTTED_HALF_NOTE),
-		REST(QUARTER_NOTE),
-		D5(QUARTER_NOTE),
-		D5(QUARTER_NOTE),
-		C5(HALF_NOTE),
-		D5(QUARTER_NOTE),
-		D5(QUARTER_NOTE),
-		C5(HALF_NOTE),
-		Bb4(QUARTER_NOTE),
-		Bb4(HALF_NOTE),
-		A4(QUARTER_NOTE),
-		G4(QUARTER_NOTE),
-		REST(QUARTER_NOTE),
-		C5(QUARTER_NOTE),
-		REST(QUARTER_NOTE),
-		C4(WHOLE_NOTE),
-		A4(HALF_NOTE),
-		G4(HALF_NOTE),
-		F4(HALF_NOTE),
-		G4(HALF_NOTE),
-		A4(HALF_NOTE),
-		D5(HALF_NOTE),
-		C5(QUARTER_NOTE),
-		B4(HALF_NOTE),
-		C5(QUARTER_NOTE),
-		A4(HALF_NOTE),
-		G4(HALF_NOTE),
-		F4(WHOLE_NOTE + QUARTER_NOTE),
-		REST(DOTTED_HALF_NOTE)
-	};		
+
+Note_t notes[] = SONG;
+		
 		
 wave_gen_t generator = {0};
 wave_gen_t * gen_ptr = &generator;
@@ -161,7 +86,7 @@ void EXTI0_IRQHandler() {
 				//Stop if less than one second since last press
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
 				stopTimer();
-				LED_WritePattern(____);
+				LED_WritePattern(LED_OFF);
 				stopped = 1;
 			}
 		}
@@ -181,7 +106,7 @@ void TIM2_IRQHandler() {
 
 	//Set next value to DAC
 	DAC_value = getNextSample(gen_ptr);
-	DAC->DHR12R1 = DAC_value & 0x0FFF;
+	DAC->DHR12R1 = DAC_value;
 }
 
 void codecClockSetup() {

@@ -12,10 +12,10 @@
 #define PI_OVER_2 25736 //1.5708007813
 #define TWO 32768 // 2
 #define ONE 16384 // 1
-#define C1 ONE // 1
-#define C2 -8192 // -1/2!
-#define C3 683 // 1/4!
-#define C4 -23  // -1/6!
+#define C_1 ONE // 1
+#define C_2 -8192 // -1/2!
+#define C_3 683 // 1/4!
+#define C_4 -23  // -1/6!
 
 #include <stdint.h>
 
