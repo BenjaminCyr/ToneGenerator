@@ -13,96 +13,24 @@
 // 7*1/84000000 =  83ns = 12 MHz
 
 #define DAC_MAX 2048
-#define SAMPLING_RATE 20000
 #define VOLUME 1
 #define SONG_SIZE 73
 
-#define BPM 300
-#define BEAT SAMPLING_RATE*60/BPM
-#define SIXTEENTH_BEAT BEAT/4
-
-//Note durations
-#define SIXTEENTH_NOTE SIXTEENTH_BEAT
-#define EIGHTH_NOTE 2*SIXTEENTH_BEAT
-#define DOTTED_EIGHTH_NOTE 3*SIXTEENTH_BEAT
-#define QUARTER_NOTE BEAT
-#define DOTTED_QUARTER_NOTE 6*SIXTEENTH_BEAT
-#define HALF_NOTE 2*BEAT
-#define DOTTED_HALF_NOTE 3*BEAT
-#define WHOLE_NOTE 4*BEAT
-
-//Note Frequencies
-#define REST 0  
-#define C4_NOTE 4186  // C4 261.625 Hz
-#define Cs4_NOTE 4435 // C#/Db4 277.1875 Hz
-#define Db4_NOTE Cs4_NOTE 
-#define D4_NOTE	4699  // D4 293.6875 Hz
-#define Ds4_NOTE 4978 // D#/Eb4 311.125 Hz
-#define Eb4_NOTE Ds4_NOTE 
-#define E4_NOTE	5274  // E4 329.625 Hz
-#define F4_NOTE	5588  // F4 349.25 Hz
-#define Fs4_NOTE 5920  // F#/Gb4 370.00 Hz
-#define Gb4_NOTE Fs4_NOTE  
-#define G4_NOTE	6272  // G4 392.00 Hz
-#define Gs4_NOTE 6645  // G#/Ab4 415.3125 Hz
-#define Ab4_NOTE Gs4_NOTE  
-#define A4_NOTE 7040  // A4 440.00 Hz
-#define As4_NOTE 7459  // A#/Bb4 466.1875 Hz
-#define Bb4_NOTE As4_NOTE 
-#define B4_NOTE 7902  // B4 493.875 Hz
-#define C5_NOTE 8372  // C5 523.25 Hz
-#define Cs5_NOTE 8870 // C#/Db5 554.375 Hz
-#define Db5_NOTE Cs5_NOTE 
-#define D5_NOTE 9397 // D5 587.3125 Hz
-
-#define ____ 0  
-#define ___G 1  
-#define __O_ 2  
-#define __OG 3  
-#define _R__ 4  
-#define _R_G 5  
-#define _RO_ 6  
-#define _ROG 7  
-#define B___ 8  
-#define B__G 9  
-#define B_O_ 10 
-#define B_OG 11 
-#define BR__ 12 
-#define BR_G 13 
-#define BRO_ 14 
-#define BROG 15 
 
 #include "stm32f4xx.h"  
 #include "..\Includes\cs43l22.h"
 #include "..\Includes\stm32f4_discovery.h"
 #include "SystemClockConfig.c"
 #include "cosine.h"
-
-typedef struct Note_t {
-	uint32_t frequency;
-	uint32_t duration;
-	uint32_t LED_pattern;
-} Note_t;
-
-typedef enum LED_t {
-	ALL,
-	GREEN,
-	ORANGE,
-	RED,
-	BLUE
-} LED_t;
+#include "LED.h"
+#include "button.h"
+#include "notes.h"
 
 void timerSetup(void);
 void startTimer(void);
 void stopTimer(void);
 void DACSetup(void);
 void codecClockSetup(void);
-void LED_Initialize(void);
-void LED_WritePattern(uint8_t pattern);
-void LED_Toggle(LED_t LED_selection);
-void Button_Initialize(void);
-void Button_SetInterruptEXTI0(void);
-uint8_t Button_Read(void);
 
 // Globals
 uint16_t DAC_value;
@@ -112,99 +40,79 @@ uint8_t stopped;			//Tells whether sound is stopped
 uint8_t current_note; 	//Current index of the frequency
 // Frequencies in Q28.4
 Note_t notes[] = 
-		{{C4_NOTE, WHOLE_NOTE, _R__},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{G4_NOTE, HALF_NOTE, B___},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{F4_NOTE, HALF_NOTE, __OG},
-		{D4_NOTE, QUARTER_NOTE, _RO_},
-		{C4_NOTE, DOTTED_HALF_NOTE, _R__},	
-		{REST, QUARTER_NOTE, ____},	
-		{E4_NOTE, QUARTER_NOTE, _R_G},
-		{E4_NOTE, HALF_NOTE, _R_G},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{G4_NOTE, HALF_NOTE, B___},
-		{C4_NOTE, HALF_NOTE, _R__},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{F4_NOTE, HALF_NOTE, __OG},
-		{G4_NOTE, QUARTER_NOTE, B___},
-		{A4_NOTE, DOTTED_HALF_NOTE, B_O_},
-		{REST, QUARTER_NOTE, ____},
-		{C4_NOTE, WHOLE_NOTE, _R__},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{G4_NOTE, HALF_NOTE, B___},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{F4_NOTE, HALF_NOTE, __OG},
-		{D4_NOTE, QUARTER_NOTE, _RO_},
-		{C4_NOTE, DOTTED_HALF_NOTE, _R__},	
-		{REST, QUARTER_NOTE, ____},
-		{E4_NOTE, QUARTER_NOTE, _R_G},
-		{Eb4_NOTE, HALF_NOTE, ___G},
-		{E4_NOTE, QUARTER_NOTE, _R_G},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{E4_NOTE, QUARTER_NOTE, _R_G},
-		{D4_NOTE, HALF_NOTE, _RO_},
-		{G4_NOTE, QUARTER_NOTE, B___},
-		{REST, QUARTER_NOTE, ____},
-		{C5_NOTE, HALF_NOTE, _R__},
-		{C5_NOTE, HALF_NOTE, _R__},
-		{C5_NOTE, HALF_NOTE, _R__},
-		{C5_NOTE, DOTTED_HALF_NOTE, _R__},
-		{Bb4_NOTE, QUARTER_NOTE, BRO_},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{G4_NOTE, HALF_NOTE, B___},
-		{F4_NOTE, QUARTER_NOTE, __OG},
-		{F4_NOTE, HALF_NOTE, __OG},
-		{G4_NOTE, QUARTER_NOTE, B___},
-		{A4_NOTE, DOTTED_HALF_NOTE, B_O_},
-		{REST, QUARTER_NOTE, ____},
-		{D5_NOTE, QUARTER_NOTE, BROG},
-		{D5_NOTE, QUARTER_NOTE, BROG},
-		{C5_NOTE, HALF_NOTE, BR_G},
-		{D5_NOTE, QUARTER_NOTE, BROG},
-		{D5_NOTE, QUARTER_NOTE, BROG},
-		{C5_NOTE, HALF_NOTE, BR_G},
-		{Bb4_NOTE, QUARTER_NOTE, BRO_},
-		{Bb4_NOTE, HALF_NOTE, BRO_},
-		{A4_NOTE, QUARTER_NOTE, B_O_},
-		{G4_NOTE, QUARTER_NOTE, B___},
-		{REST, QUARTER_NOTE, ____},
-		{C5_NOTE, QUARTER_NOTE, BR_G},
-		{REST, QUARTER_NOTE, ____},
-		{C4_NOTE, WHOLE_NOTE, _R__},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{G4_NOTE, HALF_NOTE, B___},
-		{F4_NOTE, HALF_NOTE, __OG},
-		{G4_NOTE, HALF_NOTE, B___},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{D5_NOTE, HALF_NOTE, BROG},
-		{C5_NOTE, QUARTER_NOTE, _R__},
-		{B4_NOTE, HALF_NOTE, B__G},
-		{C5_NOTE, QUARTER_NOTE, _R__},
-		{A4_NOTE, HALF_NOTE, B_O_},
-		{G4_NOTE, HALF_NOTE, B___},
-		{F4_NOTE, WHOLE_NOTE, __OG},
-		{REST, WHOLE_NOTE, ____}
-		
-		
-		
-		
-//		{REST, QUARTER_NOTE, ____},	
-//		{C4_NOTE, WHOLE_NOTE, _R__},
-//		{Cs4_NOTE, QUARTER_NOTE, __O_},
-//		{D4_NOTE, QUARTER_NOTE, _RO_},
-//		{Ds4_NOTE, QUARTER_NOTE, ___G},
-//		{E4_NOTE, QUARTER_NOTE, _R_G},
-//		{F4_NOTE, QUARTER_NOTE, __OG},
-//		{Fs4_NOTE, QUARTER_NOTE, _ROG},
-//		{G4_NOTE, QUARTER_NOTE, B___},
-//		{Gs4_NOTE, QUARTER_NOTE, BR__},
-//		{A4_NOTE, QUARTER_NOTE, B_O_},
-//		{As4_NOTE, QUARTER_NOTE, BRO_},
-//		{B4_NOTE, QUARTER_NOTE, B__G},
-//		{C5_NOTE, QUARTER_NOTE, BR_G},
-//		{Cs5_NOTE, QUARTER_NOTE, B_OG},
-//		{D5_NOTE, QUARTER_NOTE, BROG},
+		{C4(WHOLE_NOTE), 
+		A4(HALF_NOTE),
+		G4(HALF_NOTE),
+		F4(QUARTER_NOTE),
+		F4(HALF_NOTE),
+		D4(QUARTER_NOTE),
+		C4(DOTTED_HALF_NOTE),
+		REST(QUARTER_NOTE),
+		E4(QUARTER_NOTE),
+		E4(HALF_NOTE),
+		F4(QUARTER_NOTE),
+		G4(HALF_NOTE),
+		C4(HALF_NOTE),
+		F4(QUARTER_NOTE),
+		F4(HALF_NOTE),
+		G4(QUARTER_NOTE),
+		A4(DOTTED_HALF_NOTE),
+		REST(QUARTER_NOTE),
+		C4(WHOLE_NOTE), 
+		A4(HALF_NOTE),
+		G4(HALF_NOTE),
+		F4(QUARTER_NOTE),
+		F4(HALF_NOTE),
+		D4(QUARTER_NOTE),
+		C4(DOTTED_HALF_NOTE),
+		REST(QUARTER_NOTE),
+		E4(QUARTER_NOTE),
+		Eb4(HALF_NOTE),
+		E4(QUARTER_NOTE),
+		F4(QUARTER_NOTE),
+		E4(QUARTER_NOTE),
+		D4(HALF_NOTE),
+		G4(QUARTER_NOTE),
+		REST(QUARTER_NOTE),
+		C5(HALF_NOTE),
+		C5(HALF_NOTE),
+		C5(HALF_NOTE),
+		C5(DOTTED_HALF_NOTE),
+		Bb4(QUARTER_NOTE),
+		A4(HALF_NOTE),
+		G4(HALF_NOTE),
+		F4(QUARTER_NOTE),
+		F4(HALF_NOTE),
+		G4(QUARTER_NOTE),
+		A4(DOTTED_HALF_NOTE),
+		REST(QUARTER_NOTE),
+		D5(QUARTER_NOTE),
+		D5(QUARTER_NOTE),
+		C5(HALF_NOTE),
+		D5(QUARTER_NOTE),
+		D5(QUARTER_NOTE),
+		C5(HALF_NOTE),
+		Bb4(QUARTER_NOTE),
+		Bb4(HALF_NOTE),
+		A4(QUARTER_NOTE),
+		G4(QUARTER_NOTE),
+		REST(QUARTER_NOTE),
+		C5(QUARTER_NOTE),
+		REST(QUARTER_NOTE),
+		C4(WHOLE_NOTE),
+		A4(HALF_NOTE),
+		G4(HALF_NOTE),
+		F4(HALF_NOTE),
+		G4(HALF_NOTE),
+		A4(HALF_NOTE),
+		D5(HALF_NOTE),
+		C5(QUARTER_NOTE),
+		B4(HALF_NOTE),
+		C5(QUARTER_NOTE),
+		A4(HALF_NOTE),
+		G4(HALF_NOTE),
+		F4(WHOLE_NOTE + QUARTER_NOTE),
+		REST(DOTTED_HALF_NOTE)
 	};		
 		
 wave_gen_t generator = {0};
