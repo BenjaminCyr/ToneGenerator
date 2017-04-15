@@ -22,7 +22,8 @@
 #include "cosine.h"
 #include "LED.h"
 #include "button.h"
-#include "AU_FightSong.h"
+//#include "AU_FightSong.h"
+#include "ZeldasLullaby.h"
 
 void timerSetup(void);
 void startTimer(void);
