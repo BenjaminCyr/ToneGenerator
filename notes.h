@@ -2,12 +2,15 @@
  * Author: Benjamin Cyr
  * Date: April 15, 2017
  */
+ 
+#ifndef _NOTES_H_
+#define _NOTES_H_
 
 #include "LED.h"
 
 #define SAMPLING_RATE 20000
 
-#define BPM 120
+#define BPM 300
 #define BEAT SAMPLING_RATE*60/BPM
 #define SIXTEENTH_BEAT BEAT/4
 
@@ -22,7 +25,7 @@
 #define WHOLE_NOTE 4*BEAT
 
 //Note Frequencies
-#define REST 0  
+#define REST_NOTE 0  
 #define C4_NOTE 4186  // C4 261.625 Hz
 #define Cs4_NOTE 4435 // C#/Db4 277.1875 Hz
 #define Db4_NOTE Cs4_NOTE 
@@ -45,7 +48,7 @@
 #define Db5_NOTE Cs5_NOTE 
 #define D5_NOTE 9397 // D5 587.3125 Hz
 
-#define REST(NOTE)		{REST, NOTE, LED_OFF}	
+#define REST(NOTE)		{REST_NOTE, NOTE, LED_OFF}	
 #define C4(NOTE)		{C4_NOTE, NOTE, LED_R}
 #define Cs4(NOTE)		{Cs4_NOTE, NOTE, LED_O}
 #define Db4(NOTE)		{Db4_NOTE, NOTE, LED_O}
@@ -74,4 +77,4 @@ typedef struct Note_t {
 	uint32_t LED_pattern;
 } Note_t;
 
-
+#endif
