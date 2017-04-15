@@ -1,4 +1,4 @@
-/* File: cosine.h
+/* File: cosine.c
  * Author: Benjamin Cyr
  * Date: April 9, 2017
  */
