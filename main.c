@@ -12,12 +12,14 @@
 #define TIM3_PSC_VALUE 0
 // 7*1/84000000 =  83ns = 12 MHz
 
-#define DAC_MAX 3000
+#define DAC_MAX 2048
 #define SAMPLING_RATE 20000
 #define VOLUME 1
-#define BPM 120
+#define SONG_SIZE 73
+
+#define BPM 300
 #define BEAT SAMPLING_RATE*60/BPM
-#define SIXTEENTH_BEAT BEAT/16
+#define SIXTEENTH_BEAT BEAT/4
 
 //Note durations
 #define SIXTEENTH_NOTE SIXTEENTH_BEAT
@@ -33,7 +35,7 @@
 #define REST 0  
 #define C4_NOTE 4186  // C4 261.625 Hz
 #define Cs4_NOTE 4435 // C#/Db4 277.1875 Hz
-#define Db4_NOTE Cs4_NOTE // C#/Db4 277.1875 Hz
+#define Db4_NOTE Cs4_NOTE 
 #define D4_NOTE	4699  // D4 293.6875 Hz
 #define Ds4_NOTE 4978 // D#/Eb4 311.125 Hz
 #define Eb4_NOTE Ds4_NOTE 
@@ -48,7 +50,10 @@
 #define As4_NOTE 7459  // A#/Bb4 466.1875 Hz
 #define Bb4_NOTE As4_NOTE 
 #define B4_NOTE 7902  // B4 493.875 Hz
-#define C5_NOTE 8372  // B4 523.25 Hz
+#define C5_NOTE 8372  // C5 523.25 Hz
+#define Cs5_NOTE 8870 // C#/Db5 554.375 Hz
+#define Db5_NOTE Cs5_NOTE 
+#define D5_NOTE 9397 // D5 587.3125 Hz
 
 #define ____ 0  
 #define ___G 1  
@@ -107,31 +112,100 @@ uint8_t stopped;			//Tells whether sound is stopped
 uint8_t current_note; 	//Current index of the frequency
 // Frequencies in Q28.4
 Note_t notes[] = 
-		{{C4_NOTE, SIXTEENTH_NOTE, _R__},
-		{REST, SIXTEENTH_NOTE, ____},
-		{Cs4_NOTE, SIXTEENTH_NOTE, __O_},
-		{REST, SIXTEENTH_NOTE, ____},
-		{D4_NOTE, SIXTEENTH_NOTE, _RO_},
-		{REST, SIXTEENTH_NOTE, ____},
-		{Ds4_NOTE, SIXTEENTH_NOTE, ___G},
-		{REST, SIXTEENTH_NOTE, ____},
-		{E4_NOTE, SIXTEENTH_NOTE, _R_G},
-		{REST, SIXTEENTH_NOTE, ____},
-		{F4_NOTE, SIXTEENTH_NOTE, __OG},
-		{REST, SIXTEENTH_NOTE, ____},
-		{Fs4_NOTE, SIXTEENTH_NOTE, _ROG},
-		{REST, SIXTEENTH_NOTE, ____},
-		{G4_NOTE, SIXTEENTH_NOTE, B___},
-		{REST, SIXTEENTH_NOTE, ____},
-		{Gs4_NOTE, SIXTEENTH_NOTE, BR__},
-		{REST, SIXTEENTH_NOTE, ____},
-		{A4_NOTE, SIXTEENTH_NOTE, B_O_},
-		{REST, SIXTEENTH_NOTE, ____},
-		{As4_NOTE, SIXTEENTH_NOTE, BRO_},
-		{REST, SIXTEENTH_NOTE, ____},
-		{B4_NOTE, SIXTEENTH_NOTE, B__G},
-		{REST, SIXTEENTH_NOTE, ____},
-		{C4_NOTE, SIXTEENTH_NOTE, BR_G}}; 
+		{{C4_NOTE, WHOLE_NOTE, _R__},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{G4_NOTE, HALF_NOTE, B___},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{F4_NOTE, HALF_NOTE, __OG},
+		{D4_NOTE, QUARTER_NOTE, _RO_},
+		{C4_NOTE, DOTTED_HALF_NOTE, _R__},	
+		{REST, QUARTER_NOTE, ____},	
+		{E4_NOTE, QUARTER_NOTE, _R_G},
+		{E4_NOTE, HALF_NOTE, _R_G},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{G4_NOTE, HALF_NOTE, B___},
+		{C4_NOTE, HALF_NOTE, _R__},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{F4_NOTE, HALF_NOTE, __OG},
+		{G4_NOTE, QUARTER_NOTE, B___},
+		{A4_NOTE, DOTTED_HALF_NOTE, B_O_},
+		{REST, QUARTER_NOTE, ____},
+		{C4_NOTE, WHOLE_NOTE, _R__},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{G4_NOTE, HALF_NOTE, B___},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{F4_NOTE, HALF_NOTE, __OG},
+		{D4_NOTE, QUARTER_NOTE, _RO_},
+		{C4_NOTE, DOTTED_HALF_NOTE, _R__},	
+		{REST, QUARTER_NOTE, ____},
+		{E4_NOTE, QUARTER_NOTE, _R_G},
+		{Eb4_NOTE, HALF_NOTE, ___G},
+		{E4_NOTE, QUARTER_NOTE, _R_G},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{E4_NOTE, QUARTER_NOTE, _R_G},
+		{D4_NOTE, HALF_NOTE, _RO_},
+		{G4_NOTE, QUARTER_NOTE, B___},
+		{REST, QUARTER_NOTE, ____},
+		{C5_NOTE, HALF_NOTE, _R__},
+		{C5_NOTE, HALF_NOTE, _R__},
+		{C5_NOTE, HALF_NOTE, _R__},
+		{C5_NOTE, DOTTED_HALF_NOTE, _R__},
+		{Bb4_NOTE, QUARTER_NOTE, BRO_},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{G4_NOTE, HALF_NOTE, B___},
+		{F4_NOTE, QUARTER_NOTE, __OG},
+		{F4_NOTE, HALF_NOTE, __OG},
+		{G4_NOTE, QUARTER_NOTE, B___},
+		{A4_NOTE, DOTTED_HALF_NOTE, B_O_},
+		{REST, QUARTER_NOTE, ____},
+		{D5_NOTE, QUARTER_NOTE, BROG},
+		{D5_NOTE, QUARTER_NOTE, BROG},
+		{C5_NOTE, HALF_NOTE, BR_G},
+		{D5_NOTE, QUARTER_NOTE, BROG},
+		{D5_NOTE, QUARTER_NOTE, BROG},
+		{C5_NOTE, HALF_NOTE, BR_G},
+		{Bb4_NOTE, QUARTER_NOTE, BRO_},
+		{Bb4_NOTE, HALF_NOTE, BRO_},
+		{A4_NOTE, QUARTER_NOTE, B_O_},
+		{G4_NOTE, QUARTER_NOTE, B___},
+		{REST, QUARTER_NOTE, ____},
+		{C5_NOTE, QUARTER_NOTE, BR_G},
+		{REST, QUARTER_NOTE, ____},
+		{C4_NOTE, WHOLE_NOTE, _R__},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{G4_NOTE, HALF_NOTE, B___},
+		{F4_NOTE, HALF_NOTE, __OG},
+		{G4_NOTE, HALF_NOTE, B___},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{D5_NOTE, HALF_NOTE, BROG},
+		{C5_NOTE, QUARTER_NOTE, _R__},
+		{B4_NOTE, HALF_NOTE, B__G},
+		{C5_NOTE, QUARTER_NOTE, _R__},
+		{A4_NOTE, HALF_NOTE, B_O_},
+		{G4_NOTE, HALF_NOTE, B___},
+		{F4_NOTE, WHOLE_NOTE, __OG},
+		{REST, WHOLE_NOTE, ____}
+		
+		
+		
+		
+//		{REST, QUARTER_NOTE, ____},	
+//		{C4_NOTE, WHOLE_NOTE, _R__},
+//		{Cs4_NOTE, QUARTER_NOTE, __O_},
+//		{D4_NOTE, QUARTER_NOTE, _RO_},
+//		{Ds4_NOTE, QUARTER_NOTE, ___G},
+//		{E4_NOTE, QUARTER_NOTE, _R_G},
+//		{F4_NOTE, QUARTER_NOTE, __OG},
+//		{Fs4_NOTE, QUARTER_NOTE, _ROG},
+//		{G4_NOTE, QUARTER_NOTE, B___},
+//		{Gs4_NOTE, QUARTER_NOTE, BR__},
+//		{A4_NOTE, QUARTER_NOTE, B_O_},
+//		{As4_NOTE, QUARTER_NOTE, BRO_},
+//		{B4_NOTE, QUARTER_NOTE, B__G},
+//		{C5_NOTE, QUARTER_NOTE, BR_G},
+//		{Cs5_NOTE, QUARTER_NOTE, B_OG},
+//		{D5_NOTE, QUARTER_NOTE, BROG},
+	};		
 		
 wave_gen_t generator = {0};
 wave_gen_t * gen_ptr = &generator;
@@ -153,9 +227,9 @@ int main(void){
 	
 	//Initialize variables
 	stopped = 1;
-	current_frequency = 0;
-	LED_ticks = 0;
-	gen_ptr->frequency = frequencies[0];
+	current_note = 0;
+	beat_ticks = notes[0].duration;
+	gen_ptr->frequency = notes[0].frequency;
 	gen_ptr->sampling_rate = SAMPLING_RATE;
 	gen_ptr->amplitude = DAC_MAX;
 	
@@ -172,12 +246,14 @@ void EXTI0_IRQHandler() {
 				//Unmute and Start
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_OFF);
 				startTimer();
+				LED_WritePattern(notes[current_note].LED_pattern);
 				stopped = 0;
 			}
 			else {
 				//Stop if less than one second since last press
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
 				stopTimer();
+				LED_WritePattern(____);
 				stopped = 1;
 			}
 		}
@@ -188,7 +264,7 @@ void TIM2_IRQHandler() {
 	//Clear Pending Bit
 	TIM2->SR &= ~TIM_SR_UIF;
 	if (beat_ticks-- <= 0) {
-		current_note++;
+		current_note = current_note < SONG_SIZE - 1? current_note + 1 : 0;
 		beat_ticks = notes[current_note].duration;
 		gen_ptr->frequency = notes[current_note].frequency;
 		reset_wave_gen(gen_ptr);
@@ -197,7 +273,7 @@ void TIM2_IRQHandler() {
 
 	//Set next value to DAC
 	DAC_value = getNextSample(gen_ptr);
-	DAC->DHR12R1 = DAC_value;
+	DAC->DHR12R1 = DAC_value & 0x0FFF;
 }
 
 void codecClockSetup() {
