@@ -15,11 +15,14 @@
 #define DAC_MAX 2048
 #define VOLUME 1
 
+#define SAMPLING_RATE 20000
+
 #include "stm32f4xx.h"  
 #include "..\Includes\cs43l22.h"
 #include "..\Includes\stm32f4_discovery.h"
 #include "SystemClockConfig.c"
 #include "cosine.h"
+#include "notes.h"
 #include "LED.h"
 #include "button.h"
 #include "AU_FightSong.h"
@@ -29,14 +32,18 @@ typedef struct song_t {
 	uint32_t size;
 	uint32_t bpm;
 	uint32_t beat_duration;
-	notes_t notes;
-}
+	note_t * notes;
+} song_t;
+
+note_t zeldas_lullaby[] = ZELDAS_LULLABY;
+note_t au_fightsong[] = AU_FIGHTSONG;
 
 void timerSetup(void);
 void startTimer(void);
 void stopTimer(void);
 void DACSetup(void);
 void codecClockSetup(void);
+void setBPM(song_t * song, uint32_t bpm);
 
 // Globals
 uint16_t DAC_value;
@@ -68,10 +75,9 @@ int main(void){
 	
 	//Initialize variables
 
-	stopped = 1;
 	current_note = 0;
 	beat_ticks = song.notes[0].duration*song.beat_duration;
-	gen_ptr->frequency = notes[0].frequency;
+	gen_ptr->frequency = song.notes[0].frequency;
 	gen_ptr->sampling_rate = SAMPLING_RATE;
 	gen_ptr->amplitude = DAC_MAX;
 	
@@ -88,20 +94,22 @@ void EXTI0_IRQHandler() {
 			case 0: 
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_OFF);
 				startTimer();
-				song.notes = ZELDAS_LULLABY;
-				song.size = ZELDAS_LULLABY_SIZE
+				song.notes = &zeldas_lullaby[0];
+				song.size = ZELDAS_LULLABY_SIZE;
 				setBPM(song_ptr, ZELDAS_LULLABY_BPM);
-				current_note = 0;
-				LED_WritePattern(notes[current_note].LED_pattern);
+				current_note = ZELDAS_LULLABY_SIZE - 1;
+				beat_ticks = 10000;
+				LED_WritePattern(song.notes[current_note].LED_pattern);
 				current_song = 1;
 				break;
 			case 1:
-				song.notes = AU_FIGHTSONG;
-				song.size = AU_FIGHTSONG_SIZE
+				song.notes = &au_fightsong[0];
+				song.size = AU_FIGHTSONG_SIZE;
 				setBPM(song_ptr, AU_FIGHTSONG_BPM);
-				current_note = 0;
-				LED_WritePattern(notes[current_note].LED_pattern);
-				current_song = 1;
+				current_note = AU_FIGHTSONG_SIZE - 1;
+				beat_ticks = 0;
+				LED_WritePattern(song.notes[current_note].LED_pattern);
+				current_song = 2;
 				break;
 			default:
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
@@ -119,9 +127,9 @@ void TIM2_IRQHandler() {
 	if (beat_ticks-- <= 0) {
 		current_note = current_note < song.size - 1? current_note + 1 : 0;
 		beat_ticks = song.notes[current_note].duration*song.beat_duration;
-		gen_ptr->frequency = notes[current_note].frequency;
+		gen_ptr->frequency = song.notes[current_note].frequency;
 		reset_wave_gen(gen_ptr);
-		LED_WritePattern(notes[current_note].LED_pattern);
+		LED_WritePattern(song.notes[current_note].LED_pattern);
 	}
 
 	//Set next value to DAC
@@ -177,7 +185,7 @@ void DACSetup() {
 
 void setBPM(song_t * song, uint32_t bpm) {
 	song->bpm = bpm;
-	song->beat_duration = SAMPLING_RATE*60/bpm;
+	song->beat_duration = SAMPLING_RATE*15/bpm;
 }
 
 //I don't know why HAL doesn't set this up, 

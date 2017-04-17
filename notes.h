@@ -12,11 +12,11 @@
 #define SIXTEENTH_NOTE 1
 #define EIGHTH_NOTE 2
 #define DOTTED_EIGHTH_NOTE 3
-#define QUARTER_NOTE 8
-#define DOTTED_QUARTER_NOTE 12
-#define HALF_NOTE 16
-#define DOTTED_HALF_NOTE 24
-#define WHOLE_NOTE 32
+#define QUARTER_NOTE 4
+#define DOTTED_QUARTER_NOTE 6
+#define HALF_NOTE 8
+#define DOTTED_HALF_NOTE 12
+#define WHOLE_NOTE 16
 
 //Note Frequencies
 #define REST_NOTE 0  
@@ -134,11 +134,11 @@
 
 #define C7(NOTE)		{C7_NOTE, NOTE, LED_R}
 
-typedef struct Note_t {
+typedef struct note_t {
 	uint32_t frequency;
 	uint32_t duration;
 	uint32_t LED_pattern;
-} Note_t;
+} note_t;
 
 #endif
 
