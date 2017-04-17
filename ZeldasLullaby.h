@@ -8,9 +8,10 @@
  
  #include "notes.h"
  
- #define SONG_SIZE 63
+ #define ZELDAS_LULLABY_BPM 120
+ #define ZELDAS_LULLABY_SIZE 63
  
- #define SONG {\
+ #define ZELDAS_LULLABY {\
 	  B4(HALF_NOTE),\
 	  D5(QUARTER_NOTE),\
 	  A4(HALF_NOTE),\

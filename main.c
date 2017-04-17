@@ -22,8 +22,15 @@
 #include "cosine.h"
 #include "LED.h"
 #include "button.h"
-//#include "AU_FightSong.h"
+#include "AU_FightSong.h"
 #include "ZeldasLullaby.h"
+
+typedef struct song_t {
+	uint32_t size;
+	uint32_t bpm;
+	uint32_t beat_duration;
+	notes_t notes;
+}
 
 void timerSetup(void);
 void startTimer(void);
@@ -34,15 +41,15 @@ void codecClockSetup(void);
 // Globals
 uint16_t DAC_value;
 
-uint32_t beat_ticks;			//Counter for Flashing LED
-uint8_t stopped;			//Tells whether sound is stopped
+uint32_t beat_ticks;	//Counter for Flashing LED
+uint8_t current_song;	//Tells whether sound is stopped
 uint8_t current_note; 	//Current index of the frequency
 
-Note_t notes[] = SONG;
-		
-		
 wave_gen_t generator = {0};
 wave_gen_t * gen_ptr = &generator;
+
+song_t song = {0};
+song_t * song_ptr = &song;
 
 int main(void){
 	SystemClock_Config(); //Increase Clock Speed
@@ -60,9 +67,10 @@ int main(void){
 	cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
 	
 	//Initialize variables
+
 	stopped = 1;
 	current_note = 0;
-	beat_ticks = notes[0].duration;
+	beat_ticks = song.notes[0].duration*song.beat_duration;
 	gen_ptr->frequency = notes[0].frequency;
 	gen_ptr->sampling_rate = SAMPLING_RATE;
 	gen_ptr->amplitude = DAC_MAX;
@@ -70,25 +78,36 @@ int main(void){
 	//Enable Interrupts
 	__enable_irq();
 	
-		for (;;);
+	for (;;);
 }
 
 void EXTI0_IRQHandler() {
 		//Debounce Button
 		if (Button_Read()) {
-			if(stopped) { 
-				//Unmute and Start
+			switch(current_song) {
+			case 0: 
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_OFF);
 				startTimer();
+				song.notes = ZELDAS_LULLABY;
+				song.size = ZELDAS_LULLABY_SIZE
+				setBPM(song_ptr, ZELDAS_LULLABY_BPM);
+				current_note = 0;
 				LED_WritePattern(notes[current_note].LED_pattern);
-				stopped = 0;
-			}
-			else {
-				//Stop if less than one second since last press
+				current_song = 1;
+				break;
+			case 1:
+				song.notes = AU_FIGHTSONG;
+				song.size = AU_FIGHTSONG_SIZE
+				setBPM(song_ptr, AU_FIGHTSONG_BPM);
+				current_note = 0;
+				LED_WritePattern(notes[current_note].LED_pattern);
+				current_song = 1;
+				break;
+			default:
 				cs43l22_SetMute(AUDIO_I2C_ADDRESS, AUDIO_MUTE_ON);
 				stopTimer();
 				LED_WritePattern(LED_OFF);
-				stopped = 1;
+				current_song = 0;
 			}
 		}
 		EXTI->PR |= 0x01; //Clear Pending Bit
@@ -98,8 +117,8 @@ void TIM2_IRQHandler() {
 	//Clear Pending Bit
 	TIM2->SR &= ~TIM_SR_UIF;
 	if (beat_ticks-- <= 0) {
-		current_note = current_note < SONG_SIZE - 1? current_note + 1 : 0;
-		beat_ticks = notes[current_note].duration;
+		current_note = current_note < song.size - 1? current_note + 1 : 0;
+		beat_ticks = song.notes[current_note].duration*song.beat_duration;
 		gen_ptr->frequency = notes[current_note].frequency;
 		reset_wave_gen(gen_ptr);
 		LED_WritePattern(notes[current_note].LED_pattern);
@@ -154,6 +173,11 @@ void DACSetup() {
 	GPIOA->MODER |= GPIO_MODER_MODER4;
 	DAC->CR |= DAC_CR_EN1;
 	DAC->DHR12R1 = 0;
+}
+
+void setBPM(song_t * song, uint32_t bpm) {
+	song->bpm = bpm;
+	song->beat_duration = SAMPLING_RATE*60/bpm;
 }
 
 //I don't know why HAL doesn't set this up, 

@@ -8,9 +8,10 @@
  
  #include "notes.h"
  
- #define SONG_SIZE 73
+ #define AU_FIGHTSONG_BPM 300
+ #define AU_FIGHTSONG_SIZE 73
  
- #define SONG {\
+ #define AU_FIGHTSONG {\
 	  C4(WHOLE_NOTE),\
 		A4(HALF_NOTE),\
 		G4(HALF_NOTE),\
